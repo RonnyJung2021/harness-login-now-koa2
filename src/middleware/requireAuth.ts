@@ -1,12 +1,13 @@
-const { HttpError } = require('../lib/httpError');
+import type { Context, Next } from 'koa';
+import { HttpError } from '../lib/httpError';
 
 /**
  * 要求已登录：依赖上游 `koa-session` 已挂载并解析 Cookie。
  * 未登录或会话缺少用户信息时抛出 401（由全局错误处理中间件序列化为 JSON）。
  */
-async function requireAuth(ctx, next) {
-  const userId = ctx.session && ctx.session.userId;
-  const username = ctx.session && ctx.session.username;
+export async function requireAuth(ctx: Context, next: Next): Promise<void> {
+  const userId = ctx.session?.userId;
+  const username = ctx.session?.username;
   if (
     userId === undefined ||
     userId === null ||
@@ -17,5 +18,3 @@ async function requireAuth(ctx, next) {
   }
   await next();
 }
-
-module.exports = { requireAuth };

@@ -1,51 +1,45 @@
-const Koa = require('koa');
-const bodyParser = require('koa-bodyparser');
-const Router = require('koa-router');
-const session = require('koa-session').default;
-const bcrypt = require('bcrypt');
-const { HttpError } = require('./lib/httpError');
-const { requireAuth } = require('./middleware/requireAuth');
-const userStore = require('./userStore');
+import Koa from 'koa';
+import bodyParser from 'koa-bodyparser';
+import Router from 'koa-router';
+import session from 'koa-session';
+import bcrypt from 'bcrypt';
+import { HttpError } from './lib/httpError';
+import { requireAuth } from './middleware/requireAuth';
+import * as userStore from './userStore';
 
 userStore.loadUsers();
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-/**
- * 开发环境请求日志用：绝不输出明文 password。
- * @param {unknown} body
- */
-function redactBodyForLog(body) {
+/** 开发环境请求日志用：绝不输出明文 password。 */
+function redactBodyForLog(body: unknown): unknown {
   if (body == null || typeof body !== 'object' || Array.isArray(body)) {
     return body;
   }
-  const out = { ...body };
+  const out = { ...(body as Record<string, unknown>) };
   if ('password' in out) out.password = '[REDACTED]';
   return out;
 }
 
-/** @type {Map<string, object>} */
-const sessionMemory = new Map();
+const sessionMemory = new Map<string, object>();
 
 const sessionStore = {
-  /**
-   * @param {string} key
-   * @param {number | string} _maxAge
-   * @param {{ ctx: import('koa').Context, rolling?: boolean }} _meta
-   */
-  async get(key, _maxAge, _meta) {
+  async get(
+    key: string,
+    _maxAge: number,
+    _meta: { rolling: boolean; ctx?: unknown }
+  ): Promise<object | null> {
     return sessionMemory.get(key) ?? null;
   },
-  /**
-   * @param {string} key
-   * @param {object} sess
-   * @param {number | string} _maxAge
-   */
-  async set(key, sess, _maxAge) {
+  async set(
+    key: string,
+    sess: object,
+    _maxAge: number,
+    _meta: { rolling: boolean; changed: boolean; ctx?: unknown }
+  ): Promise<void> {
     sessionMemory.set(key, sess);
   },
-  /** @param {string} key */
-  async destroy(key) {
+  async destroy(key: string, _meta?: { ctx?: unknown }): Promise<void> {
     sessionMemory.delete(key);
   },
 };
@@ -59,7 +53,7 @@ app.keys = process.env.SESSION_KEYS
 app.use(async (ctx, next) => {
   try {
     await next();
-  } catch (err) {
+  } catch (err: unknown) {
     ctx.type = 'application/json';
     if (err instanceof HttpError) {
       ctx.status = err.status;
@@ -79,11 +73,14 @@ app.use(async (ctx, next) => {
       error: 'INTERNAL_ERROR',
       message: '服务器内部错误',
     };
-    // 不记录 ctx / request.body，避免意外把密码写入日志
     if (isDev) {
-      console.error('[internal]', err.name, err.message);
-      if (err.stack) console.error(err.stack);
-    } else {
+      if (err instanceof Error) {
+        console.error('[internal]', err.name, err.message);
+        if (err.stack) console.error(err.stack);
+      } else {
+        console.error('[internal]', String(err));
+      }
+    } else if (err instanceof Error) {
       console.error('[internal]', err.name);
     }
   }
@@ -117,7 +114,6 @@ app.use(
       maxAge: 86400000,
       httpOnly: true,
       sameSite: 'lax',
-      path: '/',
       signed: true,
       secure: process.env.NODE_ENV === 'production',
       store: sessionStore,
@@ -146,9 +142,15 @@ router.post('/register', async (ctx) => {
     return;
   }
 
-  const body = ctx.request.body;
-  const usernameRaw = body && body.username;
-  const passwordRaw = body && body.password;
+  const body = ctx.request.body as unknown;
+  const usernameRaw =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>).username
+      : undefined;
+  const passwordRaw =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>).password
+      : undefined;
 
   if (
     typeof usernameRaw !== 'string' ||
@@ -201,9 +203,15 @@ router.post('/login', async (ctx) => {
     return;
   }
 
-  const body = ctx.request.body;
-  const usernameRaw = body && body.username;
-  const passwordRaw = body && body.password;
+  const body = ctx.request.body as unknown;
+  const usernameRaw =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>).username
+      : undefined;
+  const passwordRaw =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>).password
+      : undefined;
 
   if (
     typeof usernameRaw !== 'string' ||
@@ -239,9 +247,7 @@ router.post('/login', async (ctx) => {
   }
 
   const user = userStore.findUserByUsername(username);
-  const passwordOk =
-    user && (await bcrypt.compare(passwordRaw, user.passwordHash));
-  if (!passwordOk) {
+  if (!user || !(await bcrypt.compare(passwordRaw, user.passwordHash))) {
     ctx.status = 401;
     ctx.body = {
       error: 'INVALID_CREDENTIALS',
@@ -250,8 +256,8 @@ router.post('/login', async (ctx) => {
     return;
   }
 
-  ctx.session.userId = user.id;
-  ctx.session.username = user.username;
+  ctx.session!.userId = user.id;
+  ctx.session!.username = user.username;
 
   ctx.status = 200;
   ctx.body = {
@@ -269,10 +275,11 @@ router.post('/logout', async (ctx) => {
 
 router.get('/me', requireAuth, async (ctx) => {
   ctx.type = 'application/json';
+  const s = ctx.session!;
   ctx.body = {
     user: {
-      id: ctx.session.userId,
-      username: ctx.session.username,
+      id: s.userId!,
+      username: s.username!,
     },
   };
 });
@@ -290,7 +297,7 @@ app.use(async (ctx) => {
   };
 });
 
-const port = Number.parseInt(process.env.PORT, 10) || 4000;
+const port = Number.parseInt(process.env.PORT ?? '', 10) || 4000;
 
 app.listen(port, () => {
   console.log(`listening on port ${port}`);
