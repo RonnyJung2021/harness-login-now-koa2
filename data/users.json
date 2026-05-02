@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "username": "alice",
+    "passwordHash": "$2b$10$u40GWOUGxKErPT7wOZKYcuMGxq.iGus9hH8uU964aqe8E9H4jDVem"
+  },
+  {
+    "id": 2,
+    "username": "verify_alice",
+    "passwordHash": "$2b$10$.c0Yh/Zjp1jIDXT7i5y4Nedzgl79QXm0sWhkQtN0jmGa7Lv0wyhSS"
+  },
+  {
+    "id": 3,
+    "username": "u1777692182581",
+    "passwordHash": "$2b$10$cn7D7CTc2Aq5g5XXtU7t8u9p9zzZlK3fkBzYrWKuHrzwPV2Fjzwti"
+  },
+  {
+    "id": 4,
+    "username": "alice_manual",
+    "passwordHash": "$2b$10$G4aYSB1uUUiTooBUnN1z9e13mIkhyJ4sLzTo4zKG2A0WWYjcBIoFS"
+  },
+  {
+    "id": 5,
+    "username": "verify_1777692804_9087_13553",
+    "passwordHash": "$2b$10$.36bp9RMQ6dxW3u90in9deIPUesjm1gnWoaZHgBgt4UQh9zegs4m."
+  },
+  {
+    "id": 6,
+    "username": "verify_1777693121_30914_15520",
+    "passwordHash": "$2b$10$h2qhftVUv59CvV0WonUAe.gfRIOqsRa4v6n/txz2QLnGRMNFkfHQ."
+  },
+  {
+    "id": 7,
+    "username": "verify_1777695196_6928_20064",
+    "passwordHash": "$2b$10$d.Y1swspiekBXZ8UkZTq6ersmtbKSuB6XLBpar2b847aiHDhzPrMe"
+  },
+  {
+    "id": 8,
+    "username": "verify_1777695208_4512_20227",
+    "passwordHash": "$2b$10$2Nk1dchAQ4wlBSMWekeFtO.TJlnTNhEfZWT193sULHdl62FnrqUFO"
+  },
+  {
+    "id": 9,
+    "username": "verify_1777695212_10331_20344",
+    "passwordHash": "$2b$10$AVY1ymutLaw56Q0OBM8eueeYRGvWlXPDvg64A5dvEz/H9Z9iXfzFG"
+  }
+]
